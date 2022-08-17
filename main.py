@@ -100,4 +100,4 @@ def _read_database(csvfile=DATA_CSV):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main(sys.argv[1])
