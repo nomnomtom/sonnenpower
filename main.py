@@ -7,8 +7,39 @@ DATA_CSV = "data.csv"
 
 
 def main(param):
+    """
+    sums up matching database results and returns a dictionary with the result value
+
+    :param param: query input
+    :return: resulting sum
+    """
     try:
         param = _validate(param)
+        queries = param["data"]["attributes"]["list"]
+        psum = 0
+        for query in queries:
+            row = _get_row_by_date(query["date"])
+            if row is None:
+                raise ValueError(f"No data found for date {query['date']}")
+            qvalue = int(query.get("value") or query.get("power"))
+            if qvalue < 10:
+                psum += row["value_up_to_10_kwp"]
+            elif qvalue < 30:
+                psum += row["value_up_to_30_kwp"]
+            elif qvalue < 40:
+                psum += row["value_up_to_40_kwp"]
+            else:
+                raise ValueError(f"Query value {qvalue} >= 40, max <40")
+        return {
+                "data": {
+                    "attributes": {
+                        "result": {
+                            "value": str(psum)
+                        }
+                    }
+                }
+            }
+
     except ValueError as ve:
         print(f"Cannot parse input: {ve}", file=sys.stderr)
         sys.exit(1)
@@ -41,6 +72,10 @@ def _validate(param):
 
 def _get_row_by_date(date):
     data = _read_database()
+    for d in data:
+        if d['date_from'][5:7] == date[5:7]:  # compare the month part
+            return d
+    return None
 
 
 def _read_database(csvfile=DATA_CSV):
